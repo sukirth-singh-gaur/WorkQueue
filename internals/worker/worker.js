@@ -19,4 +19,4 @@ async function processTask(task) {
             break;
     }
 }
-export {processTask};
+module.exports.processTask = processTask;

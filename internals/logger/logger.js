@@ -7,7 +7,7 @@ function logSuccess(task) {
     ` Task payload: ${payloadStr}` +
     ` Retries left: ${task.retries}`;
 
-    fs.appendFileSync('logs.txt', text);
+    fs.appendFileSync('cmd/worker/logs.txt', text);
     console.log('logged successfully to the file');
 }
 
@@ -19,8 +19,10 @@ function logFailure(task, err) {
     ` Retries left: ${task.retries}` +
     ` Error message: ${err.message}`;
 
-    fs.appendFileSync('logs.txt', text);
+    fs.appendFileSync('cmd/worker/logs.txt', text);
     console.log('logged failure to the file');
 }
 
-export { logSuccess, logFailure };
+module.exports.logSuccess = logSuccess;
+module.exports.logFailure = logFailure;
+

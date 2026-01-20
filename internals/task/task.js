@@ -14,4 +14,5 @@ class Metrics {
     }
 }
 
-export {Task,Metrics};
+module.exports.Task = Task;
+module.exports.Metrics = Metrics;

@@ -1,6 +1,6 @@
 const express = require("express");
 const {createClient} = require("redis");
-
+require('dotenv').config();
 const app = express();
 app.use(express.json());
 
@@ -36,7 +36,7 @@ app.post('/enqueue',async(req,res)=>{
 
     try{
         const queueLen = await client.rPush('task_queue',JSON.stringify(task));
-        console.log('Length of queue', queueLength);
+        console.log('Length of queue', queueLen);
 
         res
         .status(200)
