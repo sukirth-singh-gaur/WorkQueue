@@ -2,7 +2,7 @@
 
 A Distributed Background Task Processing System written in **JavaScript (Node.js)**, using **Redis** for job queuing.
 
-
+![Description](image.png)
 ## High-Level Overview
 
 **WorkQueue** is a distributed background task processing system designed to execute long-running or asynchronous tasks **outside the main request–response cycle**, improving application responsiveness and scalability.
