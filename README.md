@@ -1,95 +1,114 @@
 # WorkQueue
 
-A Distributed Background Task Processing System written in **JavaScript (Node.js)**, using **Redis** for job queuing.
+A distributed background task processing system built with **Node.js and Redis** that allows applications to offload slow or asynchronous operations to background workers.
 
 ![Description](image.png)
-## High-Level Overview
-
-**WorkQueue** is a distributed background task processing system designed to execute long-running or asynchronous tasks **outside the main request–response cycle**, improving application responsiveness and scalability.
-
-The system is intentionally modular and simple, making it easy to add new task types and understand how real-world background workers function.
 
 
-## Why Do We Need This?
+# The Problem
 
-In modern web applications, certain operations should **not block user requests**, such as:
+Modern web applications often need to perform tasks that take significantly longer than a normal HTTP request should.
+
+Examples include:
 
 * Sending emails
 * Generating PDFs
-* Resizing images
-* Calling third-party APIs
+* Processing images
+* Calling third‑party APIs
+* Running analytics jobs
 
-### Example
+If these tasks are executed **inside the main request–response cycle**, the API becomes slow and unresponsive.
 
-When a user signs in to your website, you may want to send them a welcome email.
+Example scenario:
 
-**Without WorkQueue**
-The API waits until the email is sent → slow response.
+User signs up on a website.
 
-**With WorkQueue**
-The API enqueues a `send_email` task → responds immediately → worker handles the email in the background.
+Without a background job system:
+
+1. API receives request
+2. API sends email
+3. Email provider responds
+4. API returns response
+
+Total latency: **3–5 seconds**
 
 This leads to:
 
-* Faster API responses
-* Better user experience
-* Improved system scalability
+* Slow user experience
+* Blocked server threads
+* Poor scalability
 
 
-## System Architecture
+# The Solution
 
-WorkQueue consists of **two independent services**:
+WorkQueue solves this problem by introducing a **background job processing system**.
 
-```
-Client → Producer → Redis Queue → Worker → Task Execution
-```
+Instead of executing long‑running tasks during the request, the application **adds a job to a queue** and returns immediately.
+
+A separate worker service later processes the job.
+
+Flow:
+
+Client Request → Producer → Redis Queue → Worker → Task Execution
+
+Benefits:
+
+* Fast API responses
+* Improved scalability
+* Fault‑tolerant background processing
+* Easy horizontal scaling
 
 
-## Services
+# System Architecture
 
-### Producer
+The system is composed of three main components:
 
-The **Producer** is responsible for:
+## 1. Producer (API Service)
 
-* Accepting tasks via an HTTP API
-* Validating task input
-* Pushing tasks into Redis
-* Never executing tasks itself
+Responsibilities:
 
-#### Endpoint
+* Accept background jobs via HTTP
+* Validate job input
+* Push tasks into Redis
 
-```
+The Producer **never executes tasks itself**.
+
+Endpoint:
+
 POST /enqueue
-```
-
-#### How to Add a Job
-
-Send an HTTP POST request to the Producer service.
-
-##### Example Request
-
-```json
-{
-  "type": "send_email",
-  "retries": 3,
-  "payload": {
-    "to": "worldisweird2020@gmail.com",
-    "subject": "testing producer"
-  }
-}
-```
-
-##### Field Explanation
-
-| Field     | Description                                  |
-| --------- | -------------------------------------------- |
-| `type`    | **Required**. Identifies the task to execute |
-| `retries` | Number of retry attempts if execution fails  |
-| `payload` | Arbitrary key-value data used by the task    |
 
 
+## 2. Redis Queue
 
-### Task Representation (JavaScript)
+Redis acts as the **message broker**.
+
+Responsibilities:
+
+* Store pending jobs
+* Coordinate workers
+* Ensure only one worker processes each job
+
+Workers consume jobs using Redis **blocking list operations (BLPOP)**.
+
+This allows workers to sleep while waiting for tasks without consuming CPU.
+
+
+## 3. Worker
+
+Workers are responsible for:
+
+* Pulling jobs from Redis
+* Executing tasks
+* Retrying failed jobs
+* Logging outcomes
+* Exposing runtime metrics
+
+Workers are **stateless**, which allows the system to scale horizontally by simply starting more worker processes.
+
+
+# Job Structure
+
+Each job has a flexible schema:
 
 ```js
 {
@@ -99,38 +118,101 @@ Send an HTTP POST request to the Producer service.
 }
 ```
 
-The payload is intentionally flexible to support **any task type**.
+Fields:
+
+| Field   | Description                               |
+| ------- | ----------------------------------------- |
+| type    | Identifies which task to execute          |
+| payload | Arbitrary task-specific data              |
+| retries | Number of retry attempts if the job fails |
 
 
+# Example Job
 
-### Producer Response
+```json
+{
+  "type": "send_email",
+  "retries": 3,
+  "payload": {
+    "to": "test@example.com",
+    "subject": "Hello"
+  }
+}
+```
 
-On success:
+# Task Execution
+
+The worker processes tasks using a task handler.
+
+Example:
+
+```javascript
+async function processTask(task) {
+  switch (task.type) {
+    case "send_email":
+      console.log("Sending email to", task.payload.to);
+      break;
+
+    case "resize_image":
+      console.log("Resizing image");
+      break;
+
+    case "generate_pdf":
+      console.log("Generating PDF");
+      break;
+
+    default:
+      throw new Error("Unsupported task");
+  }
+}
+```
+
+Adding a new task requires only adding another case.
+
+
+# Concurrency Model
+
+Workers use Redis blocking operations:
+
+BLPOP queue
+
+This allows workers to efficiently wait for tasks.
+
+Parallelism is achieved by running multiple worker processes:
 
 ```
-Task of type 'send_email' has been successfully added to the queue
+node worker.js
+node worker.js
+node worker.js
 ```
 
+Redis distributes jobs among workers automatically.
 
-## Worker
 
-The **Worker** is responsible for:
+# Retry Mechanism
 
-* Pulling tasks from Redis
-* Executing them concurrently
-* Retrying failed tasks
-* Logging outcomes
-* Exposing runtime metrics
+If a task fails:
 
-##  Metrics Endpoint
+1. Retry count is decreased
+2. Job is pushed back to the queue
 
-The Worker exposes:
+If retries reach zero:
 
-```
+* Job is marked as failed
+* Error is logged
+
+This prevents temporary failures from losing tasks.
+
+
+# Metrics
+
+Workers expose runtime metrics.
+
+Endpoint:
+
 GET /metrics
-```
 
-### Example Response
+Example response:
 
 ```json
 {
@@ -140,131 +222,55 @@ GET /metrics
 }
 ```
 
-### Metrics Explained
-
-| Metric                | Description                       |
-| --------------------- | --------------------------------- |
-| `total_jobs_in_queue` | Number of jobs currently in Redis |
-| `jobs_done`           | Total successfully executed jobs  |
-| `jobs_failed`         | Total failed jobs                 |
+These metrics provide visibility into system health.
 
 
-## How Jobs Are Executed
+# Logging
 
-Task execution logic lives inside the Worker.
+All job executions are logged to `logs.txt`.
 
-Each task type is handled using a **switch statement**, making the system highly extensible.
-
-### Example Task Processor (JavaScript)
-
-```js
-async function processTask(task) {
-  if (!task.payload) {
-    throw new Error("payload is empty");
-  }
-
-  switch (task.type) {
-    case "send_email":
-      console.log(
-        "Sending email to",
-        task.payload.to,
-        "with subject",
-        task.payload.subject
-      );
-      break;
-
-    case "resize_image":
-      console.log(
-        "Resizing image to x:",
-        task.payload.new_x,
-        "y:",
-        task.payload.new_y
-      );
-      break;
-
-    case "generate_pdf":
-      console.log("Generating pdf...");
-      break;
-
-    default:
-      throw new Error("unsupported task");
-  }
-}
-```
-
-### Adding a New Task Type
-
-To add a new task:
-
-1. Add a new `case` in the switch
-2. Implement the task logic
-3. Done — no other changes required
-
-
-## Concurrency Model
-
-* Workers use **Redis blocking operations (`BLPOP`)**
-* Multiple workers can run concurrently
-* Redis guarantees **only one worker processes a task**
-* No locks are required
-
-### Parallelism
-
-True parallelism is achieved by running **multiple worker processes**:
-
-```bash
-node worker.js
-node worker.js
-node worker.js
-```
-
-Each process runs independently and competes for tasks via Redis.
-
-
-##  Logging
-
-Every task execution is logged to `logs.txt`.
-
-### Logged Information
+Logged information includes:
 
 * Task type
-* Task payload
+* Payload
 * Remaining retries
-* Error message (on failure)
+* Error message (if any)
 
 
-## Design Principles
+# Design Principles
 
-* **Producer is stateless**
-* **Workers are stateless**
-* **Redis handles coordination**
-* **Retries belong to the task**
-* **Metrics are read-only**
-* **No shared memory between workers**
+* Producer is stateless
+* Workers are stateless
+* Redis handles coordination
+* Tasks define their own retry policy
+* Workers share no memory
 
-##  Running the Project
+This design makes the system easy to scale and reason about.
 
-### Start Redis
 
-```bash
+# Running the Project
+
+Start Redis
+
+```
 redis-server
 ```
 
-### Start Producer
+Start Producer
 
-```bash
+```
 node producer.js
 ```
 
-### Start Worker
+Start Worker
 
-```bash
+```
 node worker.js
 ```
 
-### Enqueue a Task
+# Enqueue a Task
 
-```bash
+```
 curl -X POST http://localhost:3000/enqueue \
   -H "Content-Type: application/json" \
   -d '{
@@ -277,18 +283,17 @@ curl -X POST http://localhost:3000/enqueue \
   }'
 ```
 
-## Learning Outcomes
+# What This Project Demonstrates
 
-This project demonstrates understanding of:
-
-* Background job queues
+* Background job queue architecture
+* Distributed worker systems
 * Redis as a coordination layer
-* Concurrency vs parallelism
-* Stateless worker design
 * Retry mechanisms
-* Observability patterns
+* Observability with metrics
+* Stateless service design
 
-## Summary
+# Summary
 
-**WorkQueue** is a minimal yet realistic background processing system that mirrors how production systems handle asynchronous work — without unnecessary abstractions.
+WorkQueue is a minimal but realistic background processing system that demonstrates how modern distributed applications handle asynchronous work outside the request–response cycle.
 
+It mirrors the architecture used by production systems such as task queues in large-scale backend services.
