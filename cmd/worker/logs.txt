@@ -35,3 +35,24 @@ SUCCESS: Task type: send_email Task payload: {"to":"sukirth@gmail.com","subject"
 SUCCESS: Task type: send_email Task payload: {"to":"sukirth@gmail.com","subject":"testing"} Retries left: 3
 SUCCESS: Task type: send_email Task payload: {"to":"sukirth@gmail.com","subject":"testing"} Retries left: 3
 SUCCESS: Task type: send_email Task payload: {"to":"sukirth@gmail.com","subject":"testing"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3
+SUCCESS: Task type: send_email Task payload: {"to":"user@example.com","subject":"Welcome to WorkQueue!"} Retries left: 3

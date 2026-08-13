@@ -75,7 +75,7 @@ The Producer **never executes tasks itself**.
 
 Endpoint:
 
-POST /enqueue
+POST http://localhost:5000/enqueue
 
 
 ## 2. Redis Queue
@@ -181,9 +181,8 @@ This allows workers to efficiently wait for tasks.
 Parallelism is achieved by running multiple worker processes:
 
 ```
-node worker.js
-node worker.js
-node worker.js
+node cmd/worker/main.js
+node cmd/worker/main.js
 ```
 
 Redis distributes jobs among workers automatically.
@@ -210,7 +209,7 @@ Workers expose runtime metrics.
 
 Endpoint:
 
-GET /metrics
+GET http://localhost:5001/metrics
 
 Example response:
 
@@ -248,30 +247,54 @@ Logged information includes:
 This design makes the system easy to scale and reason about.
 
 
+# Installation & Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Environment variables are defined in `.env`:
+
+```env
+PORT_PRODUCER=5000
+PORT_WORKER=5001
+```
+
 # Running the Project
 
-Start Redis
+### Step 1: Start Redis
 
-```
+Ensure Redis server is started on default port `6379`:
+
+```bash
 redis-server
 ```
+*(or `redis-server $(brew --prefix)/etc/redis.conf`)*
 
-Start Producer
+### Step 2: Start Producer
 
-```
-node producer.js
-```
-
-Start Worker
-
-```
-node worker.js
+```bash
+npm run start:producer
+# or: node cmd/producer/main.js
 ```
 
-# Enqueue a Task
+### Step 3: Start Worker
 
+```bash
+npm run start:worker
+# or: node cmd/worker/main.js
 ```
-curl -X POST http://localhost:3000/enqueue \
+
+# Endpoints & Usage
+
+### 1. Enqueue a Task (Producer)
+
+**POST** `http://localhost:5000/enqueue`
+
+```bash
+curl -X POST http://localhost:5000/enqueue \
   -H "Content-Type: application/json" \
   -d '{
     "type": "send_email",
@@ -281,6 +304,14 @@ curl -X POST http://localhost:3000/enqueue \
       "subject": "Hello"
     }
   }'
+```
+
+### 2. Get Metrics (Worker)
+
+**GET** `http://localhost:5001/metrics`
+
+```bash
+curl http://localhost:5001/metrics
 ```
 
 # What This Project Demonstrates

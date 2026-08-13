@@ -10,7 +10,7 @@ let total_jobs_in_queue = 0;
 let jobs_done = 0;
 let jobs_failed = 0;
 
-const PORT = process.env.PORT_WORKER;
+const PORT = process.env.PORT_WORKER || 5001;
 const WORKER_COUNT = 3;
 
 //Redis Client
